@@ -93,3 +93,9 @@ LOCK
 LOG*
 CURRENT
 MANIFEST-*
+
+# QtCreator user and project setting files
+CaffeTopology.config
+CaffeTopology.creator
+CaffeTopology.files
+CaffeTopology.includes
