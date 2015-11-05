@@ -1,26 +1,26 @@
 #include <vector>
 
-#include "caffe/common_layers.hpp"
+#include "caffe/blob.hpp"
+#include "caffe/common.hpp"
 #include "caffe/filler.hpp"
+#include "caffe/layer.hpp"
 #include "caffe/util/math_functions.hpp"
+#include "caffe/vision_layers.hpp"
 
 namespace caffe {
 
-template<typename Dtype>
-void TopologyLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,  const vector<Blob<Dtype>*>& top) {
-
+template <typename Dtype>
+void InnerProductLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top) {
   const int num_output = this->layer_param_.inner_product_param().num_output();
-
   bias_term_ = this->layer_param_.inner_product_param().bias_term();
   N_ = num_output;
   const int axis = bottom[0]->CanonicalAxisIndex(
       this->layer_param_.inner_product_param().axis());
-
   // Dimensions starting from "axis" are "flattened" into a single
   // length K_ vector. For example, if bottom[0]'s shape is (N, C, H, W),
   // and axis == 1, N inner products with dimension CHW are performed.
   K_ = bottom[0]->count(axis);
-
   // Check if we need to set up the weights
   if (this->blobs_.size() > 0) {
     LOG(INFO) << "Skipping parameter initialization";
@@ -30,19 +30,16 @@ void TopologyLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,  const
     } else {
       this->blobs_.resize(1);
     }
-
-    // Initialize the weight
+    // Intialize the weight
     vector<int> weight_shape(2);
     weight_shape[0] = N_;
     weight_shape[1] = K_;
     this->blobs_[0].reset(new Blob<Dtype>(weight_shape));
-
-    // Fill the weights
+    // fill the weights
     shared_ptr<Filler<Dtype> > weight_filler(GetFiller<Dtype>(
         this->layer_param_.inner_product_param().weight_filler()));
     weight_filler->Fill(this->blobs_[0].get());
-
-    // If necessary, initialize and fill the bias term
+    // If necessary, intiialize and fill the bias term
     if (bias_term_) {
       vector<int> bias_shape(1, N_);
       this->blobs_[1].reset(new Blob<Dtype>(bias_shape));
@@ -55,20 +52,17 @@ void TopologyLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,  const
 }
 
 template <typename Dtype>
-void TopologyLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
+void InnerProductLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
-
   // Figure out the dimensions
   const int axis = bottom[0]->CanonicalAxisIndex(
       this->layer_param_.inner_product_param().axis());
   const int new_K = bottom[0]->count(axis);
   CHECK_EQ(K_, new_K)
       << "Input size incompatible with inner product parameters.";
-
   // The first "axis" dimensions are independent inner products; the total
   // number of these is M_, the product over these dimensions.
   M_ = bottom[0]->count(0, axis);
-
   // The top shape will be the bottom shape with the flattened axes dropped,
   // and replaced by a single axis with dimension num_output (N_).
   vector<int> top_shape = bottom[0]->shape();
@@ -84,7 +78,7 @@ void TopologyLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
 }
 
 template <typename Dtype>
-void TopologyLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+void InnerProductLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     const vector<Blob<Dtype>*>& top) {
   const Dtype* bottom_data = bottom[0]->cpu_data();
   Dtype* top_data = top[0]->mutable_cpu_data();
@@ -98,20 +92,45 @@ void TopologyLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   }
 }
 
+
+
 template <typename Dtype>
-void TopologyLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
+void InnerProductLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     const vector<bool>& propagate_down,
     const vector<Blob<Dtype>*>& bottom) {
   if (this->param_propagate_down_[0]) {
     const Dtype* top_diff = top[0]->cpu_diff();
     const Dtype* bottom_data = bottom[0]->cpu_data();
     // Gradient with respect to weight
+      
+    vector<int> weight_shape(2);
+    weight_shape[0] = N_;
+    weight_shape[1] = N_;
+    const Blob<Dtype>* topology_weight_mask = new Blob<Dtype>(weight_shape);
+    
+    Dtype* data = topology_weight_mask->mutable_cpu_data();
+
+    for(int i=0; i<N_; i++){
+        data[i*N + i] = 1;
+        if i-1 >=0
+            data[i *N + i-1] = 0.5;
+        if i-2>=0
+            data[i* N + i-2] = 0.25;
+        if i+1 <N_
+            data[i *N + i+1] = 0.5;
+        if i+2< N_
+            data[i* N + i+2] = 0.25;
+    }
+#    caffe_cpu_axpby<Dtype>(N_, (Dtype)1., topology_weight_mask, (Dtype)1., bottom_data);
+    caffe_mul(N_, topology_weight_mask, bottom_data, bottom_data);
+      
     caffe_cpu_gemm<Dtype>(CblasTrans, CblasNoTrans, N_, K_, M_, (Dtype)1.,
         top_diff, bottom_data, (Dtype)1., this->blobs_[0]->mutable_cpu_diff());
   }
   if (bias_term_ && this->param_propagate_down_[1]) {
     const Dtype* top_diff = top[0]->cpu_diff();
     // Gradient with respect to bias
+      
     caffe_cpu_gemv<Dtype>(CblasTrans, M_, N_, (Dtype)1., top_diff,
         bias_multiplier_.cpu_data(), (Dtype)1.,
         this->blobs_[1]->mutable_cpu_diff());
@@ -126,10 +145,10 @@ void TopologyLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 }
 
 #ifdef CPU_ONLY
-STUB_GPU(TopologyLayer);
+STUB_GPU(InnerProductLayer);
 #endif
 
-INSTANTIATE_CLASS(TopologyLayer);
-REGISTER_LAYER_CLASS(Topology);
+INSTANTIATE_CLASS(InnerProductLayer);
+REGISTER_LAYER_CLASS(InnerProduct);
 
 }  // namespace caffe
