@@ -110,23 +110,24 @@ void InnerProductLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     
     Dtype* data = topology_weight_mask->mutable_cpu_data();
 
-    for(int i=0; i<N_; i++){
-        data[i*N + i] = 1;
-        if i-1 >=0
-            data[i *N + i-1] = 0.5;
-        if i-2>=0
-            data[i* N + i-2] = 0.25;
-        if i+1 <N_
-            data[i *N + i+1] = 0.5;
-        if i+2< N_
-            data[i* N + i+2] = 0.25;
+    for(int weight_index = 0; weight_index<N_; weight_index++){
+        data[weight_index * N_ + weight_index] = 1;
+        if (weight_index - 1 >= 0)
+            data[weight_index * N_ + weight_index - 1] = 0.5;
+        if (weight_index - 2 >= 0)
+            data[weight_index* N + weight_index -2 ] = 0.25;
+        if (weight_index + 1 < N_)
+            data[weight_index *N_ + weight_index + 1] = 0.5;
+        if (weight_index+  2 < N_)
+            data[weight_index* N_ + weight_index + 2] = 0.25;
     }
-#    caffe_cpu_axpby<Dtype>(N_, (Dtype)1., topology_weight_mask, (Dtype)1., bottom_data);
+    caffe_cpu_axpby<Dtype>(N_, (Dtype)1., topology_weight_mask, (Dtype)1., bottom_data);
     caffe_mul(N_, topology_weight_mask, bottom_data, bottom_data);
       
     caffe_cpu_gemm<Dtype>(CblasTrans, CblasNoTrans, N_, K_, M_, (Dtype)1.,
         top_diff, bottom_data, (Dtype)1., this->blobs_[0]->mutable_cpu_diff());
   }
+
   if (bias_term_ && this->param_propagate_down_[1]) {
     const Dtype* top_diff = top[0]->cpu_diff();
     // Gradient with respect to bias
