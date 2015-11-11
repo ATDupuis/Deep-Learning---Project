@@ -12,42 +12,48 @@ namespace caffe {
 template <typename Dtype>
 void TopologyLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
                                           const vector<Blob<Dtype>*>& top) {
-    const int num_output = this->layer_param_.inner_product_param().num_output();
-    bias_term_ = this->layer_param_.inner_product_param().bias_term();
+
+    const int num_output = this->layer_param_.topology_param().num_output();
+    bias_term_ = this->layer_param_.topology_param().bias_term();
     N_ = num_output;
-    const int axis = bottom[0]->CanonicalAxisIndex(
-                this->layer_param_.inner_product_param().axis());
+
+    const int axis = bottom[0]->CanonicalAxisIndex(this->layer_param_.topology_param().axis());
+
     // Dimensions starting from "axis" are "flattened" into a single
     // length K_ vector. For example, if bottom[0]'s shape is (N, C, H, W),
     // and axis == 1, N inner products with dimension CHW are performed.
     K_ = bottom[0]->count(axis);
+
     // Check if we need to set up the weights
     if (this->blobs_.size() > 0) {
         LOG(INFO) << "Skipping parameter initialization";
+
     } else {
         if (bias_term_) {
             this->blobs_.resize(2);
         } else {
             this->blobs_.resize(1);
         }
+
         // Intialize the weight
         vector<int> weight_shape(2);
         weight_shape[0] = N_;
         weight_shape[1] = K_;
         this->blobs_[0].reset(new Blob<Dtype>(weight_shape));
-        // fill the weights
-        shared_ptr<Filler<Dtype> > weight_filler(GetFiller<Dtype>(
-                                                     this->layer_param_.inner_product_param().weight_filler()));
+
+        // Fill the weights
+        shared_ptr<Filler<Dtype> > weight_filler(GetFiller<Dtype>(this->layer_param_.topology_param().weight_filler()));
         weight_filler->Fill(this->blobs_[0].get());
+
         // If necessary, intiialize and fill the bias term
         if (bias_term_) {
             vector<int> bias_shape(1, N_);
             this->blobs_[1].reset(new Blob<Dtype>(bias_shape));
-            shared_ptr<Filler<Dtype> > bias_filler(GetFiller<Dtype>(
-                                                       this->layer_param_.inner_product_param().bias_filler()));
+            shared_ptr<Filler<Dtype> > bias_filler(GetFiller<Dtype>(this->layer_param_.topology_param().bias_filler()));
             bias_filler->Fill(this->blobs_[1].get());
         }
-    }  // parameter initialization
+    }
+
     this->param_propagate_down_.resize(this->blobs_.size(), true);
 
     ConstructWeightMask();
@@ -58,7 +64,7 @@ void TopologyLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
                                        const vector<Blob<Dtype>*>& top) {
     // Figure out the dimensions
     const int axis = bottom[0]->CanonicalAxisIndex(
-                this->layer_param_.inner_product_param().axis());
+                this->layer_param_.topology_param().axis());
     const int new_K = bottom[0]->count(axis);
     CHECK_EQ(K_, new_K)
             << "Input size incompatible with inner product parameters.";
@@ -131,13 +137,14 @@ template <typename Dtype>
 void TopologyLayer<Dtype>::ConstructWeightMask()
 {
     vector<int> weight_shape(2);
+
     weight_shape[0] = N_;
     weight_shape[1] = N_;
     weight_mask_.Reshape(weight_shape);
 
     Dtype* data = weight_mask_.mutable_cpu_data();
 
-    for(int weight_index = 0; weight_index<N_; weight_index++) {
+    for(int weight_index = 0; weight_index < N_; weight_index++) {
         data[weight_index * N_ + weight_index] = 1;
         if (weight_index - 1 >= 0)
             data[weight_index * N_ + weight_index - 1] = 0.5;
