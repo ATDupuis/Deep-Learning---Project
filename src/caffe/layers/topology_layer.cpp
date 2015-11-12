@@ -16,6 +16,7 @@ void TopologyLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
     const int num_output = this->layer_param_.topology_param().num_output();
     bias_term_ = this->layer_param_.topology_param().bias_term();
     N_ = num_output;
+    weighted_bottom_.Reshape(bottom[0]->shape());
 
     const int axis = bottom[0]->CanonicalAxisIndex(this->layer_param_.topology_param().axis());
 
@@ -106,14 +107,15 @@ void TopologyLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
                                             const vector<Blob<Dtype>*>& bottom) {
     if (this->param_propagate_down_[0]) {
         const Dtype* top_diff = top[0]->cpu_diff();
-        Dtype* bottom_data = bottom[0]->mutable_cpu_data();
+        const Dtype* bottom_data = bottom[0]->cpu_data();
+        Dtype* weighted_bottom_data = weighted_bottom_.mutable_cpu_data();
         // Gradient with respect to weight
 
 //        caffe_cpu_axpby<Dtype>(N_, (Dtype)1., topology_weight_mask, (Dtype)1., bottom_data);
-        caffe_mul(N_, weight_mask_.cpu_data(), bottom_data, bottom_data);
+        caffe_mul(N_, weight_mask_.cpu_data(), bottom_data, weighted_bottom_data);
 
         caffe_cpu_gemm<Dtype>(CblasTrans, CblasNoTrans, N_, K_, M_, (Dtype)1.,
-                              top_diff, bottom_data, (Dtype)1., this->blobs_[0]->mutable_cpu_diff());
+                              top_diff, weighted_bottom_data, (Dtype)1., this->blobs_[0]->mutable_cpu_diff());
     }
 
     if (bias_term_ && this->param_propagate_down_[1]) {
