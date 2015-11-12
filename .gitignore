@@ -94,8 +94,12 @@ LOG*
 CURRENT
 MANIFEST-*
 
+## PROJECT
 # QtCreator user and project setting files
 CaffeTopology.config
 CaffeTopology.creator
 CaffeTopology.files
 CaffeTopology.includes
+
+# Example solver states and models
+!project/test_examples/mnist/snapshots/mnist_autoencoder_iter_65000.caffemodel
