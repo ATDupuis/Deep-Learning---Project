@@ -70,7 +70,6 @@ void Caffe::DeviceQuery() {
   NO_GPU;
 }
 
-
 class Caffe::RNG::Generator {
  public:
   Generator() : rng_(new caffe::rng_t(cluster_seedgen())) {}

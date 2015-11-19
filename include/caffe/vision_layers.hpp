@@ -234,6 +234,34 @@ class ConvolutionLayer : public BaseConvolutionLayer<Dtype> {
   virtual void compute_output_shape();
 };
 
+    
+template <typename Dtype>
+class ConvolutionLayer_topology
+    : public BaseConvolutionLayer<Dtype> {
+    public:
+           explicit ConvolutionLayer_topology(const LayerParameter& param)
+        : BaseConvolutionLayer<Dtype>(param) {}
+        
+        virtual inline const char* type() const { return "Convolution"; }
+        
+    protected:
+        virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+                                 const vector<Blob<Dtype>*>& top);
+        virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+                                 const vector<Blob<Dtype>*>& top);
+        virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+                                  const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
+        virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+                                  const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
+        virtual inline bool reverse_dimensions() { return false; }
+        virtual void compute_output_shape();
+    private:
+         void ConstructWeightMask();
+         Blob<Dtype> topology_filter_;
+};
+
+    
+    
 /**
  * @brief Convolve the input with a bank of learned filters, and (optionally)
  *        add biases, treating filters and convolution parameters in the
