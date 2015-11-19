@@ -40,6 +40,33 @@ shared_ptr<Layer<Dtype> > GetConvolutionLayer(
 
 REGISTER_LAYER_CREATOR(Convolution, GetConvolutionLayer);
 
+// Get topology convolution layer according to engine.
+template <typename Dtype>
+    shared_ptr<Layer<Dtype> > GetConvolutionTopologyLayer(
+    const LayerParameter& param) {
+        ConvolutionTopologyParameter_Engine engine = param.convolution_topology_param().engine();
+        if (engine == ConvolutionTopologyParameter_Engine_DEFAULT) {
+            engine = ConvolutionTopologyParameter_Engine_CAFFE;
+#ifdef USE_CUDNN
+        engine = ConvolutionParameter_Engine_CUDNN;
+#endif
+        }
+        if (engine == ConvolutionTopologyParameter_Engine_CAFFE) {
+            return shared_ptr<Layer<Dtype> >(new ConvolutionTopologyLayer<Dtype>(param));
+#ifdef USE_CUDNN
+        }
+        else if (engine == ConvolutionTopologyParameter_Engine_CUDNN) {
+            return shared_ptr<Layer<Dtype> >(new CuDNNConvolutionLayer<Dtype>(param));
+#endif
+        }
+        else {
+            LOG(FATAL) << "Layer " << param.name() << " has unknown engine.";
+  }
+}
+    
+REGISTER_LAYER_CREATOR(ConvolutionTopology, GetConvolutionTopologyLayer);
+
+    
 // Get pooling layer according to engine.
 template <typename Dtype>
 shared_ptr<Layer<Dtype> > GetPoolingLayer(const LayerParameter& param) {
