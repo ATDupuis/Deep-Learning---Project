@@ -103,10 +103,10 @@ template <typename Dtype>
         
     }
 
-
-#ifdef CPU_ONLY
-STUB_GPU(ConvolutionTopologyLayer);
-#endif
+// We do not have a GPU version yet, so turn this off.
+//#ifdef CPU_ONLY
+//STUB_GPU(ConvolutionTopologyLayer);
+//#endif
 
 INSTANTIATE_CLASS(ConvolutionTopologyLayer);
 
