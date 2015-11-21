@@ -5,11 +5,12 @@
 namespace caffe {
 
 template <typename Dtype>
-void ConvolutionLayer<Dtype>::compute_output_shape() {
+void ConvolutionTopologyLayer<Dtype>::compute_output_shape() {
   const int* kernel_shape_data = this->kernel_shape_.cpu_data();
   const int* stride_data = this->stride_.cpu_data();
   const int* pad_data = this->pad_.cpu_data();
   this->output_shape_.clear();
+    
   for (int i = 0; i < this->num_spatial_axes_; ++i) {
     // i + 1 to skip channel axis
     const int input_dim = this->input_shape(i + 1);
@@ -20,7 +21,7 @@ void ConvolutionLayer<Dtype>::compute_output_shape() {
 }
 
 template <typename Dtype>
-void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+void ConvolutionTopologyLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
   const Dtype* weight = this->blobs_[0]->cpu_data();
   for (int i = 0; i < bottom.size(); ++i) {
@@ -38,7 +39,7 @@ void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 }
 
 template <typename Dtype>
-void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
+void ConvolutionTopologyLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {
   const Dtype* weight = this->blobs_[0]->cpu_data();
   Dtype* weight_diff = this->blobs_[0]->mutable_cpu_diff();
@@ -61,6 +62,9 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
           this->weight_cpu_gemm(bottom_data + n * this->bottom_dim_,
               top_diff + n * this->top_dim_, weight_diff  );
             
+          ConstructWeightMask();
+          this->weight_cpu_gemm(weight_diff, topology_filter_.cpu_data() ,weight_diff );
+            
         }
         // gradient w.r.t. bottom data, if necessary.
         if (propagate_down[i]) {
@@ -71,11 +75,39 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     }
   }
 }
+    
+template <typename Dtype>
+    void ConvolutionTopologyLayer<Dtype>::ConstructWeightMask()
+    {
+        vector<int> weight_shape(2);
+        
+        const int N_ = *(this->kernel_shape_.cpu_data());
+        
+        weight_shape[0] = N_;
+        weight_shape[1] = N_;
+        topology_filter_.Reshape(weight_shape);
+        
+        Dtype* data = topology_filter_.mutable_cpu_data();
+        
+        for(int weight_index = 0; weight_index < N_; weight_index++) {
+            data[weight_index * N_ + weight_index] = 1;
+            if (weight_index - 1 >= 0)
+                data[weight_index * N_ + weight_index - 1] = 0.5;
+            if (weight_index - 2 >= 0)
+                data[weight_index * N_ + weight_index - 2] = 0.25;
+            if (weight_index + 1 < N_)
+                data[weight_index * N_ + weight_index + 1] = 0.5;
+            if (weight_index + 2 < N_)
+                data[weight_index* N_ + weight_index + 2] = 0.25;
+        }
+        
+    }
+
 
 #ifdef CPU_ONLY
-STUB_GPU(ConvolutionLayer);
+STUB_GPU(ConvolutionTopologyLayer);
 #endif
 
-INSTANTIATE_CLASS(ConvolutionLayer);
+INSTANTIATE_CLASS(ConvolutionTopologyLayer);
 
 }  // namespace caffe

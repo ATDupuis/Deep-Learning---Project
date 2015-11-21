@@ -40,6 +40,45 @@ shared_ptr<Layer<Dtype> > GetConvolutionLayer(
 
 REGISTER_LAYER_CREATOR(Convolution, GetConvolutionLayer);
 
+// Get topology convolution layer according to engine.
+template <typename Dtype>
+shared_ptr<Layer<Dtype> > GetConvolutionTopologyLayer(
+        const LayerParameter& param) {
+    ConvolutionTopologyParameter_Engine engine = param.convolution_topology_param().engine();
+    if (engine == ConvolutionTopologyParameter_Engine_DEFAULT) {
+        engine = ConvolutionTopologyParameter_Engine_CAFFE;
+#ifdef USE_CUDNN
+        engine = ConvolutionTopologyParameter_Engine_CUDNN;
+#endif
+    }
+    /*
+    if (engine == ConvolutionTopologyParameter_Engine_CAFFE) {
+        return shared_ptr<Layer<Dtype> >(new ConvolutionTopologyLayer<Dtype>(param));
+#ifdef USE_CUDNN
+    }
+    else if (engine == ConvolutionTopologyParameter_Engine_CUDNN) {
+        return shared_ptr<Layer<Dtype> >(new CuDNNConvolutionTopologyLayer<Dtype>(param));
+#endif
+    }*/
+
+    // We don't have a CuDNN version of this layer yet. Always return a normal convolution
+    // topology layer.
+    if (engine == ConvolutionTopologyParameter_Engine_CAFFE || engine == ConvolutionTopologyParameter_Engine_CUDNN) {
+#ifdef USE_CUDNN
+        if (engine == ConvolutionTopologyParameter_Engine_CUDNN) {
+            LOG(WARNING) << "Layer " << param.name() << " will use the normal Caffe engine instead of the CuDNN engine.";
+        }
+#endif
+        return shared_ptr<Layer<Dtype> >(new ConvolutionTopologyLayer<Dtype>(param));
+    }
+    else {
+        LOG(FATAL) << "Layer " << param.name() << " has unknown engine.";
+    }
+}
+    
+REGISTER_LAYER_CREATOR(ConvolutionTopology, GetConvolutionTopologyLayer);
+
+    
 // Get pooling layer according to engine.
 template <typename Dtype>
 shared_ptr<Layer<Dtype> > GetPoolingLayer(const LayerParameter& param) {

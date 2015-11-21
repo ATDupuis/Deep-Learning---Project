@@ -1,52 +1,16 @@
 name: "MNISTAutoencoder"
 layer {
   name: "data"
-  type: "Data"
+  type: "DummyData"
   top: "data"
-  include {
-    phase: TRAIN
-  }
   transform_param {
     scale: 0.0039215684
   }
-  data_param {
-    source: "./examples/mnist/mnist_train_lmdb"
-    batch_size: 100
-    backend: LMDB
-  }
-}
-layer {
-  name: "data"
-  type: "Data"
-  top: "data"
-  include {
-    phase: TEST
-    stage: "test-on-train"
-  }
-  transform_param {
-    scale: 0.0039215684
-  }
-  data_param {
-    source: "././examples/mnist/mnist_train_lmdb"
-    batch_size: 100
-    backend: LMDB
-  }
-}
-layer {
-  name: "data"
-  type: "Data"
-  top: "data"
-  include {
-    phase: TEST
-    stage: "test-on-test"
-  }
-  transform_param {
-    scale: 0.0039215684
-  }
-  data_param {
-    source: "examples/mnist/mnist_test_lmdb"
-    batch_size: 100
-    backend: LMDB
+  dummy_data_param {
+    num: 1
+    channels: 1
+    height: 28
+    width: 28
   }
 }
 layer {
@@ -275,7 +239,7 @@ layer {
 }
 layer {
   name: "decode1"
-  type: "InnerProduct"
+  type: "Topology"
   bottom: "decode2neuron"
   top: "decode1"
   param {
@@ -286,7 +250,7 @@ layer {
     lr_mult: 1
     decay_mult: 0
   }
-  inner_product_param {
+  topology_param {
     num_output: 784
     weight_filler {
       type: "gaussian"

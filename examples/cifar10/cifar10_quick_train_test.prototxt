@@ -77,7 +77,7 @@ layer {
 }
 layer {
   name: "conv2"
-  type: "Convolution"
+  type: "Convolution_topology"
   bottom: "pool1"
   top: "conv2"
   param {
