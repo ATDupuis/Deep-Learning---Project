@@ -21,7 +21,7 @@ layer {
   top: "data"
   include {
     phase: TEST
-    stage: "test-on-train"
+    
   }
   transform_param {
     scale: 0.0039215684
