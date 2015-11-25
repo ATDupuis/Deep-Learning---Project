@@ -295,6 +295,11 @@ else
   $(error Cannot static link with the $(CXX) compiler)
 endif
 
+# C++11 build
+ifeq ($(USE_CPP11), 1)
+	COMMON_FLAGS += -std=c++11
+endif
+
 # Debugging
 ifeq ($(DEBUG), 1)
 	COMMON_FLAGS += -DDEBUG -g -O0
