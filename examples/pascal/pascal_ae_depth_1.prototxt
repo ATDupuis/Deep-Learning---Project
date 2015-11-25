@@ -11,7 +11,7 @@ layer {
     crop_size: 28
   }
   data_param {
-    source: "./Homework2/Homework2/Data/Databases/train_lmdb"
+    source: "Homework2/Homework2/Data/Databases/train_lmdb"
     batch_size: 100
     backend: LMDB
   }
@@ -22,14 +22,14 @@ layer {
   top: "data"
   include {
     phase: TEST
-    
+    stage: "test-on-train"
   }
   transform_param {
     scale: 0.0039215684
     crop_size: 28
   }
   data_param {
-    source: "././Homework2/Homework2/Data/Databases/train_lmdb"
+    source: "Homework2/Homework2/Data/Databases/test_lmdb"
     batch_size: 100
     backend: LMDB
   }
@@ -44,7 +44,7 @@ layer {
   }
   transform_param {
     scale: 0.0039215684
-    crop_size:28
+    crop_size: 28
   }
   data_param {
     source: "./Homework2/Homework2/Data/Databases/test_lmdb"
