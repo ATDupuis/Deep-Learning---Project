@@ -103,3 +103,6 @@ CaffeTopology.includes
 
 # Example solver states and models
 !project/test_examples/mnist/snapshots/mnist_autoencoder_iter_65000.caffemodel
+
+# Homework2 data directory
+Homework2/Homework2/Data
