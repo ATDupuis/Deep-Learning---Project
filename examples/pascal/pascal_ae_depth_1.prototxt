@@ -29,7 +29,7 @@ layer {
     crop_size: 28
   }
   data_param {
-    source: "Homework2/Homework2/Data/Databases/test_lmdb"
+    source: "./Homework2/Homework2/Data/Databases/train_lmdb"
     batch_size: 100
     backend: LMDB
   }
