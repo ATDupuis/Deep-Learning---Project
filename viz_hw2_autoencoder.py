@@ -24,12 +24,12 @@ net = caffe.Net('/home/allard/Development/DeepLearning/Homework2/Models/Definiti
 transformer = caffe.io.Transformer({'data': net.blobs['data'].data.shape})
 transformer.set_transpose('data', (2,0,1))
 transformer.set_crop('data', True)
-transformer.set_crop_rng(np.random.RandomState(123456))
+transformer.set_crop_rng(np.random.RandomState(123450))
 
 # set net to batch size of 50
 net.blobs['data'].reshape(50, 1, 30, 30)
 
-test_image = caffe.io.load_image('/home/allard/Development/DeepLearning/Homework2/Data/VOC2007/JPEGImages/000020.jpg', color=False)
+test_image = caffe.io.load_image('/home/allard/Development/DeepLearning/Homework2/Data/VOC2007/JPEGImages/000023.jpg', color=False)
 processed_test_image = transformer.preprocess('data', test_image)
 processed_test_image = processed_test_image[1, :, :] # Just keep a single channel.
 
@@ -37,7 +37,7 @@ net.blobs['data'].data[...] = processed_test_image
 
 #TODO: figure out the deprocess error thing
 plt.imshow(np.squeeze(net.blobs['data'].data[0]))
-plt.savefig('visualize/viz_results/ae/input.png')
+plt.savefig('visualize/viz_results/ae/hw2/input.png')
 
 # CPU mode
 net.forward()  # call once for allocation
@@ -102,20 +102,20 @@ def vis_square(data, padsize=1, padval=0):
 
 
 # encode1 filters
-filters = net.params['encode1'][0].data #1000x784
-filters = np.reshape(filters,(-1,28,28)) #1000x28x28
+filters = net.params['compressed_ip'][0].data #1000x784
+filters = np.reshape(filters, (-1, 30, 30)) #1000x28x28
 vis_square(filters)
-plt.savefig('visualize/viz_results/ae/encode1_filters.png')
+plt.savefig('visualize/viz_results/ae/hw2/compressed_ip_filters.png')
 
 #encode1 output
-feat = net.blobs['encode1'].data[0]
-feat = np.reshape(feat, (-1,10,10)) # 1000 = 10x10x10
-vis_square(feat,padval=0.5)
-plt.savefig('visualize/viz_results/ae/encode1_output.png')
+feat = net.blobs['compressed_ip'].data[0]
+feat = np.reshape(feat, (-1, 10, 10)) # 1000 = 10x10x10
+vis_square(feat, padval=0.5)
+plt.savefig('visualize/viz_results/ae/hw2/compressed_ip_output.png')
 
 
 # encode2 filters
-filters = net.params['encode2'][0].data #500x1000
+filters = net.params['decompressed_ip'][0].data #500x1000
 tst = np.reshape(filters,(-1,100,100)) #50x100x100
 vis_square(tst)
 plt.savefig('visualize/viz_results/ae/encode2_filters_100.png')
