@@ -106,3 +106,6 @@ CaffeTopology.includes
 
 # Homework2 data directory
 Homework2/Homework2/Data
+
+# Visualization results
+visualize/viz_results
