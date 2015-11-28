@@ -95,6 +95,7 @@ def datum_to_array(datum):
 ## Pre-processing
 
 class Transformer:
+
     """
     Transform input for feeding into a Net.
 
@@ -112,6 +113,9 @@ class Transformer:
         self.raw_scale = {}
         self.mean = {}
         self.input_scale = {}
+        self.resize_modes = {}
+        self.crop = {}
+        self.crop_rng = None
 
     def __check_input(self, in_):
         if in_ not in self.inputs:
@@ -145,9 +149,20 @@ class Transformer:
         raw_scale = self.raw_scale.get(in_)
         mean = self.mean.get(in_)
         input_scale = self.input_scale.get(in_)
+        crop = self.crop.get(in_)
         in_dims = self.inputs[in_][2:]
         if caffe_in.shape[:2] != in_dims:
-            caffe_in = resize_image(caffe_in, in_dims)
+            if crop:
+                if self.crop_rng is None:
+                    raise Exception("You must set a random number generator before cropping")
+
+                top_row = self.crop_rng.randint(0, caffe_in.shape[0] - in_dims[0])
+                bottom_row = top_row + in_dims[0]  # Exclusive
+                left_column = self.crop_rng.randint(0, caffe_in.shape[1] - in_dims[1])
+                right_column = left_column + in_dims[1]  # Exclusive
+                caffe_in = caffe_in[top_row:bottom_row, left_column:right_column]
+            else:
+                caffe_in = resize_image(caffe_in, in_dims)
         if transpose is not None:
             caffe_in = caffe_in.transpose(transpose)
         if channel_swap is not None:
@@ -171,6 +186,9 @@ class Transformer:
         raw_scale = self.raw_scale.get(in_)
         mean = self.mean.get(in_)
         input_scale = self.input_scale.get(in_)
+        crop_size = self.crop_size.get(in_)
+        if crop_size is not None:
+            raise Exception("Deprocessing is not possible when the processing step includes cropping")
         if input_scale is not None:
             decaf_in /= input_scale
         if mean is not None:
@@ -271,6 +289,29 @@ class Transformer:
         """
         self.__check_input(in_)
         self.input_scale[in_] = scale
+
+    def set_crop(self, in_, crop):
+        """
+        Specify whether the input images to a given input layer should be cropped instead of resized to match the layer
+        dimensions
+
+        Parameters
+        ----------
+        in_ : which input to assign this scale factor
+        crop : whether to crop (True/False)
+        """
+        self.__check_input(in_)
+        self.crop[in_] = crop
+
+    def set_crop_rng(self, crop_rng):
+        """
+        Set the random number generator to create random crops with.
+
+        Parameters
+        ----------
+        rng : random number generator to create random crops with (numpy.random.RandomState)
+        """
+        self.crop_rng = crop_rng
 
 
 ## Image IO
