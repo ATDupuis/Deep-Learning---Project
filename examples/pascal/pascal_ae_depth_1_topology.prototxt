@@ -8,7 +8,7 @@ layer {
   }
   transform_param {
     scale: 0.0039215684
-    crop_size: 28
+    crop_size: 100
   }
   data_param {
     source: "Homework2/Homework2/Data/Databases/train_lmdb"
@@ -26,7 +26,7 @@ layer {
   }
   transform_param {
     scale: 0.0039215684
-    crop_size: 28
+    crop_size: 100
   }
   data_param {
     source: "./Homework2/Homework2/Data/Databases/train_lmdb"
@@ -44,7 +44,7 @@ layer {
   }
   transform_param {
     scale: 0.0039215684
-    crop_size: 28
+    crop_size: 100
   }
   data_param {
     source: "./Homework2/Homework2/Data/Databases/test_lmdb"
@@ -104,7 +104,7 @@ layer {
     decay_mult: 0
   }
   topology_param {
-    num_output: 784
+    num_output: 10000
     weight_filler {
       type: "gaussian"
       std: 1
