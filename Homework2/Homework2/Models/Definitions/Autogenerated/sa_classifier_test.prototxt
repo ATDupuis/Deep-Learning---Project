@@ -1,0 +1,130 @@
+layer {
+  name: "data"
+  type: "Data"
+  top: "data"
+  top: "unused_label"
+  transform_param {
+    scale: 0.00392156862745
+    crop_size: 30
+  }
+  data_param {
+    source: "./././Data/Databases/test_lmdb"
+    batch_size: 100
+    backend: LMDB
+  }
+}
+layer {
+  name: "flat_data"
+  type: "Flatten"
+  bottom: "data"
+  top: "flat_data"
+}
+layer {
+  name: "enc0_encoded_ip"
+  type: "InnerProduct"
+  bottom: "flat_data"
+  top: "enc0_encoded_ip"
+  param {
+    lr_mult: 1
+  }
+  inner_product_param {
+    num_output: 500
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+  }
+}
+layer {
+  name: "enc0_encoded_sm"
+  type: "Sigmoid"
+  bottom: "enc0_encoded_ip"
+  top: "enc0_encoded_sm"
+}
+layer {
+  name: "enc1_encoded_ip"
+  type: "InnerProduct"
+  bottom: "enc0_encoded_sm"
+  top: "enc1_encoded_ip"
+  param {
+    lr_mult: 1
+  }
+  inner_product_param {
+    num_output: 100
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+  }
+}
+layer {
+  name: "enc1_encoded_sm"
+  type: "Sigmoid"
+  bottom: "enc1_encoded_ip"
+  top: "enc1_encoded_sm"
+}
+layer {
+  name: "enc2_encoded_ip"
+  type: "InnerProduct"
+  bottom: "enc1_encoded_sm"
+  top: "enc2_encoded_ip"
+  param {
+    lr_mult: 1
+  }
+  inner_product_param {
+    num_output: 500
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+  }
+}
+layer {
+  name: "enc2_encoded_sm"
+  type: "Sigmoid"
+  bottom: "enc2_encoded_ip"
+  top: "enc2_encoded_sm"
+}
+layer {
+  name: "features"
+  type: "Flatten"
+  bottom: "enc2_encoded_sm"
+  top: "features"
+}
+layer {
+  name: "labels"
+  type: "Data"
+  top: "labels"
+  top: "dummy_label2"
+  data_param {
+    source: "Data/Databases/test_labels_lmdb"
+    batch_size: 100
+    backend: LMDB
+  }
+}
+layer {
+  name: "logistic_ip"
+  type: "InnerProduct"
+  bottom: "features"
+  top: "logistic_ip"
+  inner_product_param {
+    num_output: 20
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+  }
+}
+layer {
+  name: "logistic_sm"
+  type: "Sigmoid"
+  bottom: "logistic_ip"
+  top: "logistic_sm"
+}
+layer {
+  name: "classification_loss"
+  type: "EuclideanLoss"
+  bottom: "logistic_sm"
+  bottom: "labels"
+  top: "classification_loss"
+}

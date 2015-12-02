@@ -1,0 +1,191 @@
+layer {
+  name: "data"
+  type: "Data"
+  top: "data"
+  top: "dummy_label"
+  transform_param {
+    scale: 0.00392156862745
+    crop_size: 30
+  }
+  data_param {
+    source: "././Data/Databases/train_lmdb"
+    batch_size: 100
+    backend: LMDB
+  }
+}
+layer {
+  name: "flat_data"
+  type: "Flatten"
+  bottom: "data"
+  top: "flat_data"
+}
+layer {
+  name: "enc0_noise"
+  type: "DummyData"
+  top: "enc0_noise"
+  dummy_data_param {
+    data_filler {
+      type: "gaussian"
+      std: 0.3
+    }
+    shape {
+      dim: 100
+      dim: 900
+    }
+  }
+}
+layer {
+  name: "enc0_data_with_optional_noise"
+  type: "Eltwise"
+  bottom: "enc0_noise"
+  bottom: "flat_data"
+  top: "enc0_data_with_optional_noise"
+  eltwise_param {
+    operation: SUM
+  }
+}
+layer {
+  name: "enc0_encoded_ip"
+  type: "InnerProduct"
+  bottom: "enc0_data_with_optional_noise"
+  top: "enc0_encoded_ip"
+  param {
+    lr_mult: 0
+  }
+  inner_product_param {
+    num_output: 500
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+  }
+}
+layer {
+  name: "enc0_encoded_sm"
+  type: "Sigmoid"
+  bottom: "enc0_encoded_ip"
+  top: "enc0_encoded_sm"
+}
+layer {
+  name: "enc1_noise"
+  type: "DummyData"
+  top: "enc1_noise"
+  dummy_data_param {
+    data_filler {
+      type: "gaussian"
+      std: 0.3
+    }
+    shape {
+      dim: 100
+      dim: 500
+    }
+  }
+}
+layer {
+  name: "enc1_data_with_optional_noise"
+  type: "Eltwise"
+  bottom: "enc1_noise"
+  bottom: "enc0_encoded_sm"
+  top: "enc1_data_with_optional_noise"
+  eltwise_param {
+    operation: SUM
+  }
+}
+layer {
+  name: "enc1_encoded_ip"
+  type: "InnerProduct"
+  bottom: "enc1_data_with_optional_noise"
+  top: "enc1_encoded_ip"
+  param {
+    lr_mult: 0
+  }
+  inner_product_param {
+    num_output: 100
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+  }
+}
+layer {
+  name: "enc1_encoded_sm"
+  type: "Sigmoid"
+  bottom: "enc1_encoded_ip"
+  top: "enc1_encoded_sm"
+}
+layer {
+  name: "enc2_noise"
+  type: "DummyData"
+  top: "enc2_noise"
+  dummy_data_param {
+    data_filler {
+      type: "gaussian"
+      std: 0.3
+    }
+    shape {
+      dim: 100
+      dim: 100
+    }
+  }
+}
+layer {
+  name: "enc2_data_with_optional_noise"
+  type: "Eltwise"
+  bottom: "enc2_noise"
+  bottom: "enc1_encoded_sm"
+  top: "enc2_data_with_optional_noise"
+  eltwise_param {
+    operation: SUM
+  }
+}
+layer {
+  name: "enc2_encoded_ip"
+  type: "InnerProduct"
+  bottom: "enc2_data_with_optional_noise"
+  top: "enc2_encoded_ip"
+  param {
+    lr_mult: 1
+  }
+  inner_product_param {
+    num_output: 500
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+  }
+}
+layer {
+  name: "enc2_encoded_sm"
+  type: "Sigmoid"
+  bottom: "enc2_encoded_ip"
+  top: "enc2_encoded_sm"
+}
+layer {
+  name: "enc2_decoded_ip"
+  type: "InnerProduct"
+  bottom: "enc2_encoded_sm"
+  top: "enc2_decoded_ip"
+  param {
+    lr_mult: 1
+  }
+  inner_product_param {
+    num_output: 100
+    weight_filler {
+      type: "gaussian"
+      std: 0.005
+    }
+  }
+}
+layer {
+  name: "enc2_decoded_sm"
+  type: "Sigmoid"
+  bottom: "enc2_decoded_ip"
+  top: "enc2_decoded_sm"
+}
+layer {
+  name: "loss"
+  type: "EuclideanLoss"
+  bottom: "enc2_decoded_sm"
+  bottom: "enc1_encoded_sm"
+  top: "loss"
+}

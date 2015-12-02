@@ -1,0 +1,103 @@
+layer {
+  name: "data"
+  type: "Data"
+  top: "data"
+  top: "_dummy_label"
+  transform_param {
+    scale: 0.00392156862745
+  }
+  data_param {
+    source: "Data/Databases/test_lmdb"
+    batch_size: 100
+    backend: LMDB
+  }
+}
+layer {
+  name: "labels"
+  type: "Data"
+  top: "labels"
+  top: "_dummy_label2"
+  data_param {
+    source: "Data/Databases/test_labels_lmdb"
+    batch_size: 100
+    backend: LMDB
+  }
+}
+layer {
+  name: "noise"
+  type: "DummyData"
+  top: "noise"
+  dummy_data_param {
+    data_filler {
+      type: "gaussian"
+      std: 0.1
+    }
+    shape {
+      dim: 100
+      dim: 1
+      dim: 256
+      dim: 256
+    }
+  }
+}
+layer {
+  name: "data_with_noise"
+  type: "Eltwise"
+  bottom: "noise"
+  bottom: "data"
+  top: "data_with_noise"
+  eltwise_param {
+    operation: SUM
+  }
+}
+layer {
+  name: "flat_data"
+  type: "Flatten"
+  bottom: "data"
+  top: "flat_data"
+}
+layer {
+  name: "compressed_ip"
+  type: "InnerProduct"
+  bottom: "data_with_noise"
+  top: "compressed_ip"
+  inner_product_param {
+    num_output: 400
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+  }
+}
+layer {
+  name: "compressed_sm"
+  type: "Sigmoid"
+  bottom: "compressed_ip"
+  top: "compressed_sm"
+}
+layer {
+  name: "decompressed_ip"
+  type: "InnerProduct"
+  bottom: "compressed_sm"
+  top: "decompressed_ip"
+  inner_product_param {
+    num_output: 65536
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+  }
+}
+layer {
+  name: "decompressed_sm"
+  type: "Sigmoid"
+  bottom: "decompressed_ip"
+  top: "decompressed_sm"
+}
+layer {
+  name: "loss"
+  type: "EuclideanLoss"
+  bottom: "decompressed_sm"
+  bottom: "flat_data"
+  top: "loss"
+}

@@ -1,0 +1,105 @@
+name: "AutoEncoder"
+layer {
+  name: "input"
+  type: "Data"
+  top: "data"
+  include {
+    phase: TRAIN
+  }
+  data_param {
+    source: "Data/Databases/train_lmdb"
+    backend: LMDB
+    batch_size: 50
+  }
+  transform_param {
+    scale: 0.0039215684
+    crop_size: 30
+  }
+}
+
+layer {
+  name: "input"
+  type: "Data"
+  top: "data"
+  include {
+    phase: TEST
+  }
+  data_param {
+    source: "./Data/Databases/train_lmdb"
+    backend: LMDB
+    batch_size: 50
+  }
+  transform_param {
+    scale: 0.0039215684
+    crop_size: 30
+  }
+}
+
+layer {
+  name: "compressor_ip"
+  type: "InnerProduct"
+  bottom: "data"
+  top: "compressed_ip"
+
+  inner_product_param {
+    num_output: 100
+    weight_filler {
+      type: "gaussian"
+      std: 0.5
+      sparse: 10
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+layer {
+  name: "compressor_sm"
+  type: "Sigmoid"
+  bottom: "compressed_ip"
+  top: "compressed_sm"
+}
+
+layer {
+  name: "decompressor_ip"
+  type: "InnerProduct"
+  bottom: "compressed_sm"
+  top: "decompressed_ip"
+
+  inner_product_param {
+    num_output: 900
+    weight_filler {
+      type: "gaussian"
+      std: 0.5
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+layer {
+  name: "decompressor_sm"
+  type: "Sigmoid"
+  bottom: "decompressed_ip"
+  top: "decompressed_sm"
+}
+
+layer {
+  name: "flatdata"
+  type: "Flatten"
+  bottom: "data"
+  top: "flatdata"
+}
+
+layer {
+  name: "loss"
+  type: "SigmoidCrossEntropyLoss"
+  bottom: "decompressed_sm"
+  bottom: "flatdata"
+  top: "loss"
+  loss_weight: 1
+}

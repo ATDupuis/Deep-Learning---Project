@@ -1,0 +1,49 @@
+layer {
+  name: "data"
+  type: "Data"
+  top: "data"
+  top: "dummy_label"
+  transform_param {
+    scale: 0.00392156862745
+    crop_size: 30
+  }
+  data_param {
+    source: "./Data/Databases/train_lmdb"
+    batch_size: 100
+    backend: LMDB
+  }
+}
+layer {
+  name: "flat_data"
+  type: "Flatten"
+  bottom: "data"
+  top: "flat_data"
+}
+layer {
+  name: "enc0_encoded_ip"
+  type: "InnerProduct"
+  bottom: "flat_data"
+  top: "enc0_encoded_ip"
+  param {
+    lr_mult: 1
+  }
+  inner_product_param {
+    num_output: 900
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+  }
+}
+layer {
+  name: "enc0_encoded_sm"
+  type: "Sigmoid"
+  bottom: "enc0_encoded_ip"
+  top: "enc0_encoded_sm"
+}
+layer {
+  name: "features"
+  type: "Flatten"
+  bottom: "enc0_encoded_sm"
+  top: "features"
+}
