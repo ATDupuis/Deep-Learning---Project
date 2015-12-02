@@ -5,6 +5,7 @@ layer {
   top: "_dummy_label"
   transform_param {
     scale: 0.00392156862745
+    crop_size: 30
   }
   data_param {
     source: "Homework2/Data/Databases/test_lmdb"
@@ -35,8 +36,8 @@ layer {
     shape {
       dim: 100
       dim: 1
-      dim: 256
-      dim: 256
+      dim: 30
+      dim: 30
     }
   }
 }
@@ -81,7 +82,7 @@ layer {
   bottom: "compressed_sm"
   top: "decompressed_ip"
   inner_product_param {
-    num_output: 65536
+    num_output: 900
     weight_filler {
       type: "gaussian"
       std: 0.05
