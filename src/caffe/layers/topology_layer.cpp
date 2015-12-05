@@ -1,4 +1,5 @@
 #include <vector>
+#include <fstream>
 
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"
@@ -16,7 +17,6 @@ void TopologyLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
     const int num_output = this->layer_param_.topology_param().num_output();
     bias_term_ = this->layer_param_.topology_param().bias_term();
     N_ = num_output;
-    weighted_bottom_.Reshape(bottom[0]->shape());
 
     const int axis = bottom[0]->CanonicalAxisIndex(this->layer_param_.topology_param().axis());
 
@@ -84,6 +84,8 @@ void TopologyLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
         bias_multiplier_.Reshape(bias_shape);
         caffe_set(M_, Dtype(1), bias_multiplier_.mutable_cpu_data());
     }
+
+    weighted_top_diff_.Reshape(top[0]->shape());
 }
 
 template <typename Dtype>
@@ -108,14 +110,72 @@ void TopologyLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     if (this->param_propagate_down_[0]) {
         const Dtype* top_diff = top[0]->cpu_diff();
         const Dtype* bottom_data = bottom[0]->cpu_data();
-        Dtype* weighted_bottom_data = weighted_bottom_.mutable_cpu_data();
+        Dtype* weighted_top_diff_data = weighted_top_diff_.mutable_cpu_data();
         // Gradient with respect to weight
 
 //        caffe_cpu_axpby<Dtype>(N_, (Dtype)1., topology_weight_mask, (Dtype)1., bottom_data);
-        caffe_mul(N_, weight_mask_.cpu_data(), bottom_data, weighted_bottom_data);
+        //caffe_mul(N_, weight_mask_.cpu_data(), bottom_data, weighted_bottom_data);
+        caffe_cpu_gemm(CblasNoTrans, CblasNoTrans, M_, N_, N_, (Dtype)1.0, top_diff, weight_mask_.cpu_data(), (Dtype)0.0, weighted_top_diff_data);
+
+        /*
+template<>
+void caffe_cpu_gemm<double>(const CBLAS_TRANSPOSE TransA,
+    const CBLAS_TRANSPOSE TransB, const int M, const int N, const int K,
+    const double alpha, const double* A, const double* B, const double beta,
+    double* C) {
+  int lda = (TransA == CblasNoTrans) ? K : M;
+  int ldb = (TransB == CblasNoTrans) ? N : K;
+  cblas_dgemm(CblasRowMajor, TransA, TransB, M, N, K, alpha, A, lda, B,
+      ldb, beta, C, N);
+}
+        */
+
+        /*std::cout << "Shape bottom: ";
+        for (int axis_index = 0; axis_index < bottom[0]->num_axes(); ++axis_index)
+        {
+            std::cout << bottom[0]->shape(axis_index) << " ";
+        }
+        std::cout << std::endl;
+
+        std::cout << "Shape top diff: ";
+        for (int axis_index = 0; axis_index < top[0]->num_axes(); ++axis_index)
+        {
+            std::cout << top[0]->shape(axis_index) << " ";
+        }
+        std::cout << std::endl;
+
+        std::cout << "Shape weights mask: ";
+        for (int axis_index = 0; axis_index < weight_mask_.num_axes(); ++axis_index)
+        {
+            std::cout << weight_mask_.shape(axis_index) << " ";
+        }
+        std::cout << std::endl;
+
+        std::cout << "Shape weights: ";
+        for (int axis_index = 0; axis_index < this->blobs_[0]->num_axes(); ++axis_index)
+        {
+            std::cout << this->blobs_[0]->shape(axis_index) << " ";
+        }
+        std::cout << std::endl;
+
+        std::ofstream log_pre("/home/allard/LogPre.txt", std::ifstream::trunc);
+        std::ofstream log_post("/home/allard/LogPost.txt", std::ifstream::trunc);
+        for (int row = 0; row < M_; ++row)
+        {
+            for (int col = 0; col < N_; ++col)
+            {
+                log_pre << top_diff[row * N_ + col] << " ";
+                log_post << weighted_top_diff_data[row * N_ + col] << " ";
+            }
+            log_pre << "\n";
+            log_post << "\n";
+        }
+        log_pre << std::flush;
+        log_post << std::flush;
+        exit(0);*/
 
         caffe_cpu_gemm<Dtype>(CblasTrans, CblasNoTrans, N_, K_, M_, (Dtype)1.,
-                              top_diff, weighted_bottom_data, (Dtype)1., this->blobs_[0]->mutable_cpu_diff());
+                              weighted_top_diff_data, bottom_data, (Dtype)1., this->blobs_[0]->mutable_cpu_diff());
     }
 
     if (bias_term_ && this->param_propagate_down_[1]) {
@@ -138,25 +198,36 @@ void TopologyLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 template <typename Dtype>
 void TopologyLayer<Dtype>::ConstructWeightMask()
 {
-    vector<int> weight_shape(2);
+    vector<int> weight_mask_shape(2);
 
-    weight_shape[0] = N_;
-    weight_shape[1] = N_;
-    weight_mask_.Reshape(weight_shape);
+    weight_mask_shape[0] = N_;
+    weight_mask_shape[1] = N_;
+    weight_mask_.Reshape(weight_mask_shape);
 
     Dtype* data = weight_mask_.mutable_cpu_data();
 
     for(int weight_index = 0; weight_index < N_; weight_index++) {
-        data[weight_index * N_ + weight_index] = 1;
-        if (weight_index - 1 >= 0)
-            data[weight_index * N_ + weight_index - 1] = 0.5;
         if (weight_index - 2 >= 0)
             data[weight_index * N_ + weight_index - 2] = 0.25;
+        if (weight_index - 1 >= 0)
+            data[weight_index * N_ + weight_index - 1] = 0.5;
+        data[weight_index * N_ + weight_index] = 1;
         if (weight_index + 1 < N_)
-            data[weight_index *N_ + weight_index + 1] = 0.5;
+            data[weight_index * N_ + weight_index + 1] = 0.5;
         if (weight_index + 2 < N_)
-            data[weight_index* N_ + weight_index + 2] = 0.25;
+            data[weight_index * N_ + weight_index + 2] = 0.25;
     }
+
+    std::ofstream weight_mask_matrix("/home/allard/LogWMM.txt", std::ofstream::trunc);
+    for (int row = 0; row < N_; ++row)
+    {
+        for (int col = 0; col < N_; ++col)
+        {
+            weight_mask_matrix << data[row * N_ + col] << " ";
+        }
+        weight_mask_matrix << "\n";
+    }
+    weight_mask_matrix << std::flush;
 
 }
 

@@ -849,7 +849,7 @@ private:
   bool bias_term_;
   Blob<Dtype> bias_multiplier_;
   Blob<Dtype> weight_mask_;
-  Blob<Dtype> weighted_bottom_;
+  Blob<Dtype> weighted_top_diff_;
 };
 
 }  // namespace caffe

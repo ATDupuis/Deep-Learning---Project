@@ -67,6 +67,7 @@ layer {
     weight_filler {
       type: "gaussian"
       std: 0.05
+      sparse: 70
     }
   }
 }
