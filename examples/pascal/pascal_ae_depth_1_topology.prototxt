@@ -56,7 +56,7 @@ layer {
     }
     mask_filler {
       type: "gaussian"
-      spread: 3
+      spread: 5
     }
   }
 }
@@ -83,7 +83,7 @@ layer {
     }
     mask_filler {
       type: "gaussian"
-      spread: 3
+      spread: 5
     }
   }
 }
