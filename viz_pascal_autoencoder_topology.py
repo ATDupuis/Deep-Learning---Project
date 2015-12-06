@@ -47,44 +47,9 @@ net.forward()  # call once for allocation
 
 # check the output data dimension for all layers
 [(k, v.data.shape) for k, v in net.blobs.items()]
-# ('data', (100, 1, 28, 28))
-# ('data_data_0_split_0', (100, 1, 28, 28))
-# ('data_data_0_split_1', (100, 1, 28, 28))
-# ('flatdata', (100, 784))
-# ('flatdata_flatdata_0_split_0', (100, 784))
-# ('flatdata_flatdata_0_split_1', (100, 784))
-# ('encode1', (100, 1000))
-# ('encode1neuron', (100, 1000))
-# ('encode2', (100, 500))
-# ('encode2neuron', (100, 500))
-# ('encode3', (100, 250))
-# ('encode3neuron', (100, 250))
-# ('encode4', (100, 30))
-# ('decode4', (100, 250))
-# ('decode4neuron', (100, 250))
-# ('decode3', (100, 500))
-# ('decode3neuron', (100, 500))
-# ('decode2', (100, 1000))
-# ('decode2neuron', (100, 1000))
-# ('decode1', (100, 784))
-# ('decode1_decode1_0_split_0', (100, 784))
-# ('decode1_decode1_0_split_1', (100, 784))
-# ('cross_entropy_loss', ())
-# ('decode1neuron', (100, 784))
-# ('l2_error', ())
-
 
 #check the parameter dimensions for each layer -- weight/filter
 [(k, v[0].data.shape) for k, v in net.params.items()]
-# ('encode1', (1000, 784))
-# ('encode2', (500, 1000))
-# ('encode3', (250, 500))
-# ('encode4', (30, 250))
-# ('decode4', (250, 30))
-# ('decode3', (500, 250))
-# ('decode2', (1000, 500))
-# ('decode1', (784, 1000))
-
 
 # take an array of shape (n, height, width) or (n, height, width, channels)
 # and visualize each (height, width) thing in a grid of size approx. sqrt(n) by sqrt(n)
