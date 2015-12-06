@@ -118,18 +118,18 @@ plt.savefig('visualize/viz_results/pascal_ae_topology/encode1_output.png')
 ## deencode1
 # filters
 filters = net.params['decode1'][0].data  # 10000x1024
-filters_normal = np.reshape(filters, (-1, 28, 28))  # 900x00 --> 900x20x20
+filters_normal = np.reshape(filters, (784, 25, 40))  # 900x00 --> 900x20x20
 vis_square(filters_normal)
 plt.savefig('visualize/viz_results/pascal_ae_topology/decode1_filters.png')
 
 # filters transposed (should be approximately similar to encode1 filters? not sure if true)
 filters_transposed = filters.transpose()
-filters_transposed = np.reshape(filters,(-1, 100, 100))
+filters_transposed = np.reshape(filters,(-1, 28, 28))
 vis_square(filters_transposed)
 plt.savefig('visualize/viz_results/pascal_ae_topology/deencode1_filters_transposed.png')
 
 # deencode1 output
 feat = net.blobs['decode1'].data[0] #500
-feat = np.reshape(feat, (-1, 100, 100))  # B*900 --> Bx10x10
+feat = np.reshape(feat, (-1, 28, 28))  # B*900 --> Bx10x10
 vis_square(feat, padval=0.5)
 plt.savefig('visualize/viz_results/pascal_ae_topology/deencode1_output.png')
