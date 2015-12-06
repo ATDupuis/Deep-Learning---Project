@@ -196,8 +196,7 @@ void caffe_cpu_gemm<double>(const CBLAS_TRANSPOSE TransA,
 }
 
 template <typename Dtype>
-void TopologyLayer<Dtype>::ConstructWeightMask()
-{
+void TopologyLayer<Dtype>::ConstructWeightMask() {
     vector<int> weight_mask_shape(2);
 
     weight_mask_shape[0] = N_;
@@ -206,16 +205,32 @@ void TopologyLayer<Dtype>::ConstructWeightMask()
 
     Dtype* data = weight_mask_.mutable_cpu_data();
 
-    for(int weight_index = 0; weight_index < N_; weight_index++) {
-        if (weight_index - 2 >= 0)
-            data[weight_index * N_ + weight_index - 2] = 0.25;
-        if (weight_index - 1 >= 0)
-            data[weight_index * N_ + weight_index - 1] = 0.5;
-        data[weight_index * N_ + weight_index] = 1;
-        if (weight_index + 1 < N_)
-            data[weight_index * N_ + weight_index + 1] = 0.5;
-        if (weight_index + 2 < N_)
-            data[weight_index * N_ + weight_index + 2] = 0.25;
+    std::string mask_filler_type = this->layer_param_.topology_param().mask_filler().type();
+    if (mask_filler_type == "gaussian")
+    {
+        Dtype standard_dev = this->layer_param_.topology_param().mask_filler().spread();
+
+        for(int weight_index = 0; weight_index < N_; weight_index++) {
+            for (int weight_index_offset = -weight_index; weight_index_offset < N_ - weight_index; ++weight_index_offset) {
+                data[weight_index * N_ + weight_index + weight_index_offset] =
+                        std::exp(-static_cast<Dtype>(weight_index_offset) * weight_index_offset / (2 * standard_dev * standard_dev));
+            }
+        }
+    }
+    else if (mask_filler_type == "triangular")
+    {
+        Dtype half_base = this->layer_param_.topology_param().mask_filler().spread();
+
+        for(int weight_index = 0; weight_index < N_; weight_index++) {
+            for (int weight_index_offset = -weight_index; weight_index_offset < N_ - weight_index; ++weight_index_offset) {
+                data[weight_index * N_ + weight_index + weight_index_offset] =
+                        static_cast<Dtype>(std::max(1.0 - 1.0 / half_base * std::abs(weight_index_offset), 0.0));
+            }
+        }
+    }
+    else
+    {
+        CHECK(false) << "Unknown mask filler type: " << mask_filler_type;
     }
 
     std::ofstream weight_mask_matrix("/home/allard/LogWMM.txt", std::ofstream::trunc);

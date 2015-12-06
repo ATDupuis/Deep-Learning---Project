@@ -41,10 +41,10 @@ layer {
 }
 layer {
   name: "encode1"
-  type: "InnerProduct"
+  type: "Topology"
   bottom: "data"
   top: "encode1"
-  inner_product_param {
+  topology_param {
     num_output: 1000
     weight_filler {
       type: "gaussian"
@@ -53,6 +53,10 @@ layer {
     bias_filler {
       type: "constant"
       value: 0
+    }
+    mask_filler {
+      type: "gaussian"
+      spread: 3
     }
   }
 }
@@ -76,6 +80,10 @@ layer {
     bias_filler {
       type: "constant"
       value: 0
+    }
+    mask_filler {
+      type: "gaussian"
+      spread: 3
     }
   }
 }

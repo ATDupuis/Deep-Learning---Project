@@ -61,6 +61,11 @@ message FillerParameter {
   optional VarianceNorm variance_norm = 8 [default = FAN_IN];
 }
 
+message TopologyMaskFillerParameter {
+  required string type = 1;
+  required float spread = 2;
+}
+
 message NetParameter {
   optional string name = 1; // consider giving the network a name
   // The input blobs to the network.
@@ -1061,6 +1066,7 @@ message TopologyParameter {
   optional bool bias_term = 2 [default = true]; // whether to have bias terms
   optional FillerParameter weight_filler = 3; // The filler for the weight
   optional FillerParameter bias_filler = 4; // The filler for the bias
+  required TopologyMaskFillerParameter mask_filler = 6; // The filler for the mask
 
   // The first axis to be lumped into a single inner product computation;
   // all preceding axes are retained in the output.
