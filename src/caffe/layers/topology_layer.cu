@@ -38,14 +38,11 @@ void TopologyLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
     if (this->param_propagate_down_[0]) {
         const Dtype* top_diff = top[0]->gpu_diff();
         const Dtype* bottom_data = bottom[0]->gpu_data();
-        //Dtype* weighted_bottom_data = weighted_bottom_.mutable_gpu_data();
-        // Gradient with respect to weight
 
-        //        caffe_gpu_axpby<Dtype>(N_, (Dtype)1., topology_weight_mask, (Dtype)1., bottom_data);
-        //caffe_gpu_mul(N_, weight_mask_.gpu_data(), bottom_data, weighted_bottom_data);
-
-        //caffe_gpu_gemm<Dtype>(CblasTrans, CblasNoTrans, N_, K_, M_, (Dtype)1.,
-        //                      top_diff, weighted_bottom_data, (Dtype)1., this->blobs_[0]->mutable_gpu_diff());
+        Dtype* weighted_top_diff_data = weighted_top_diff_.mutable_gpu_data();
+        caffe_gpu_gemm(CblasNoTrans, CblasNoTrans, M_, N_, N_, (Dtype)1.0, top_diff, weight_mask_.gpu_data(), (Dtype)0.0, weighted_top_diff_data);
+        caffe_gpu_gemm<Dtype>(CblasTrans, CblasNoTrans, N_, K_, M_, (Dtype)1.,
+                              weighted_top_diff_data, bottom_data, (Dtype)1., this->blobs_[0]->mutable_gpu_diff());
     }
 
     if (bias_term_ && this->param_propagate_down_[1]) {
