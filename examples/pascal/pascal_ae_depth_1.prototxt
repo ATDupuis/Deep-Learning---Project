@@ -65,10 +65,10 @@ layer {
 }
 layer {
   name: "decode1"
-  type: "Topology"
+  type: "InnerProduct"
   bottom: "encode1neuron"
   top: "decode1"
-  topology_param {
+  inner_product_param {
     num_output: 784
     weight_filler {
       type: "gaussian"
