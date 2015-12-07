@@ -51,7 +51,7 @@ lr_mult: 1
 param {
 lr_mult: 2
 }
-convolution_topology_param {
+convolution_param {
 num_output: 50
 kernel_size: 5
 stride: 1

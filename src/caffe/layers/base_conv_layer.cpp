@@ -36,7 +36,7 @@ void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
     CHECK(num_kernel_dims == 1 || num_kernel_dims == num_spatial_axes_)
         << "kernel_size must be specified once, or once per spatial dimension "
         << "(kernel_size specified " << num_kernel_dims << " times; "
-        << num_spatial_axes_ << " spatial dims);";
+        << num_spatial_axes_ << " spatial dims);" ;
       for (int i = 0; i < num_spatial_axes_; ++i) {
         kernel_shape_data[i] =
             conv_param.kernel_size((num_kernel_dims == 1) ? 0 : i);

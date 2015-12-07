@@ -28,8 +28,10 @@ void ConvolutionTopologyLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bo
     const Dtype* bottom_data = bottom[i]->cpu_data();
     Dtype* top_data = top[i]->mutable_cpu_data();
     for (int n = 0; n < this->num_; ++n) {
-      this->forward_cpu_gemm(bottom_data + n * this->bottom_dim_, weight,
-          top_data + n * this->top_dim_);
+       
+      this->forward_cpu_gemm(bottom_data + n * this->bottom_dim_, topology_filter_.cpu_data(), bottom_data);
+      this->forward_cpu_gemm(bottom_data + n * this->bottom_dim_, weight, top_data + n * this->top_dim_);
+        
       if (this->bias_term_) {
         const Dtype* bias = this->blobs_[1]->cpu_data();
         this->forward_cpu_bias(top_data + n * this->top_dim_, bias);
@@ -58,12 +60,13 @@ void ConvolutionTopologyLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& t
       for (int n = 0; n < this->num_; ++n) {
         // gradient w.r.t. weight. Note that we will accumulate diffs.
         if (this->param_propagate_down_[0]) {
-            
-          this->weight_cpu_gemm(bottom_data + n * this->bottom_dim_,
-              top_diff + n * this->top_dim_, weight_diff  );
-            
+          
           ConstructWeightMask();
-          this->weight_cpu_gemm(weight_diff, topology_filter_.cpu_data() ,weight_diff );
+          this->weight_cpu_gemm(bottom_data, topology_filter_.cpu_data(), bottom_data);
+          this->weight_cpu_gemm(bottom_data + n * this->bottom_dim_, top_diff + n * this->top_dim_, weight_diff  );
+            
+          
+          //this->weight_cpu_gemm(weight_diff, topology_filter_.cpu_data() ,weight_diff );
             
         }
         // gradient w.r.t. bottom data, if necessary.
