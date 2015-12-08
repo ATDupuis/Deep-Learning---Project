@@ -79,7 +79,7 @@ layer {
     lr_mult: 2
   }
   convolution_param {
-    num_output: 50
+    num_output: 40
     kernel_size: 5
     stride: 1
     weight_filler {
@@ -113,7 +113,7 @@ layer {
     lr_mult: 2
   }
   topology_param {
-    num_output: 500
+    num_output: 300
     weight_filler {
       type: "xavier"
     }
@@ -153,7 +153,7 @@ layer {
     }
     mask_filler {
       type: "gaussian"
-      spread: 6
+      spread: 5
     }
   }
 }
