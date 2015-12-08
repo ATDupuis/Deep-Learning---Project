@@ -58,22 +58,64 @@ def vis_square(data, padsize=1, padval=0):
     data = data.reshape((n * data.shape[1], n * data.shape[3]) + data.shape[4:])
     plt.imshow(data)
 
+##conv1
+#filter
+filters = net.params['conv1'][0].data
+filters_normal = np.reshape(filters, (-1, 5,5))
+vis_square(filters_normal)
+plt.savefig('visualize/viz_results/mnist_lenet_topology/conv1_filters.png')
+
+#output
+feat = net.blobs['conv1'].data[0]
+feat = np.reshape(feat, (-1, 24, 24))
+vis_square(feat, padval=0.5)
+plt.savefig('visualize/viz_results/mnist_lenet_topology/conv1_output.png')
+
+
+##pool1
+#output
+feat = net.blobs['pool1'].data[0]
+feat = np.reshape(feat, (-1, 12, 12))
+vis_square(feat, padval=0.5)
+plt.savefig('visualize/viz_results/mnist_lenet_topology/pool1_output.png')
+
+##conv2
+#filter
+filters = net.params['conv2'][0].data
+filters_normal = np.reshape(filters, (-1, 5, 5))
+vis_square(filters_normal)
+plt.savefig('visualize/viz_results/mnist_lenet_topology/conv2_filters.png')
+
+#output
+feat = net.blobs['conv2'].data[0]
+feat = np.reshape(feat, (-1, 8, 8))
+vis_square(feat, padval=0.5)
+plt.savefig('visualize/viz_results/mnist_lenet_topology/conv2_output.png')
+
+
+##pool2
+#output
+feat = net.blobs['pool2'].data[0]
+feat = np.reshape(feat, (-1, 4, 4))
+vis_square(feat, padval=0.5)
+plt.savefig('visualize/viz_results/mnist_lenet_topology/pool2_output.png')
+
 
 ## ip1
 # filters
 filters = net.params['ip1'][0].data
-filters_normal = np.reshape(filters, (-1, 25, 32))
+filters_normal = np.reshape(filters, (-1, filters.shape[0], filters.shape[1]))
 vis_square(filters_normal)
 plt.savefig('visualize/viz_results/mnist_lenet_topology/ip1_filters.png')
 
 filters_transposed = filters.transpose()
-filters_transposed = np.reshape(filters, (-1, 20, 25))
+filters_transposed =np.reshape(filters_transposed, (-1, filters.shape[0], filters.shape[1]))
 vis_square(filters_transposed)
 plt.savefig('visualize/viz_results/mnist_lenet_topology/ip1_filters_transposed.png')
 
 # output
 feat = net.blobs['ip1'].data[0]
-feat = np.reshape(feat, (-1, 20, 25))  # B*1024 = Bx32x32
+feat = np.reshape(feat, (-1, 20, 15))  # B*1024 = Bx32x32
 vis_square(feat, padval=0.5)
 plt.savefig('visualize/viz_results/mnist_lenet_topology/ip1_output.png')
 
@@ -81,13 +123,13 @@ plt.savefig('visualize/viz_results/mnist_lenet_topology/ip1_output.png')
 ## ip2
 # filters
 filters = net.params['ip2'][0].data  # 10000x1024
-filters_normal = np.reshape(filters, (-1, 20, 25))  # 900x00 --> 900x20x20
+filters_normal = np.reshape(filters, (-1, filters.shape[0], filters.shape[1]))
 vis_square(filters_normal)
 plt.savefig('visualize/viz_results/mnist_lenet_topology/ip2_filters.png')
 
 # filters transposed (should be approximately similar to encode1 filters? not sure if true)
 filters_transposed = filters.transpose()
-filters_transposed = np.reshape(filters,(-1, 1, 10))
+filters_transposed =np.reshape(filters_transposed, (-1, filters.shape[0], filters.shape[1]))
 vis_square(filters_transposed)
 plt.savefig('visualize/viz_results/mnist_lenet_topology/ip2_filters_transposed.png')
 
@@ -99,6 +141,6 @@ plt.plot(feat.flat)
 plt.savefig('visualize/viz_results/mnist_lenet_topology/ip2_output_graph.png')
 
 feat = np.reshape(feat, (-1, 1, 10))  # B*900 --> Bx10x10
-vis_square(feat, padval=0.5)
 plt.clf()
+vis_square(feat, padval=0.5)
 plt.savefig('visualize/viz_results/mnist_lenet_topology/ip2_output.png')
