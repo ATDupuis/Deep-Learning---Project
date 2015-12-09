@@ -15,6 +15,8 @@ plt.rcParams['image.cmap'] = 'gray'
 
 import os
 
+output_folder = 'visualize/viz_results/pascal_ae'
+
 #caffe.set_mode_cpu()
 net = caffe.Net('examples/pascal/pascal_ae_depth_1_topology.prototxt',
                 'examples/pascal/pascal_autoencoder_topology_iter_10000.caffemodel',
@@ -40,7 +42,7 @@ net.blobs['data'].data[...] = processed_test_image
 
 #TODO: figure out the deprocess error thing
 plt.imshow(np.squeeze(net.blobs['data'].data[0]))
-plt.savefig('visualize/viz_results/pascal_ae_topology/input.png')
+plt.savefig(os.path.join(output_folder, 'input.png'))
 
 # CPU mode
 net.forward()  # call once for allocation
@@ -71,30 +73,32 @@ def vis_square(data, padsize=1, padval=0):
 filters = net.params['encode1'][0].data  # Bx10000
 filters = np.reshape(filters, (-1, 28, 28))  # Bx900 --> Bx100x100
 vis_square(filters)
-plt.savefig('visualize/viz_results/pascal_ae_topology/encode1_filters.png')
+plt.savefig(os.path.join(output_folder, 'encode1_filters.png'))
 
 # output
 feat = net.blobs['encode1'].data[0]
-feat = np.reshape(feat, (-1, 40, 25))  # B*1024 = Bx32x32
+feat = np.reshape(feat, (-1, 20, 20))  # B*1024 = Bx32x32
 vis_square(feat, padval=0.5)
-plt.savefig('visualize/viz_results/pascal_ae_topology/encode1_output.png')
+plt.savefig(os.path.join(output_folder, 'encode1_output.png'))
 
 
 ## deencode1
 # filters
 filters = net.params['decode1'][0].data  # 10000x1024
-filters_normal = np.reshape(filters, (784, 25, 40))  # 900x00 --> 900x20x20
+filters_normal = np.reshape(filters, (-1, 784, 400))  # 900x00 --> 900x20x20
 vis_square(filters_normal)
-plt.savefig('visualize/viz_results/pascal_ae_topology/decode1_filters.png')
+plt.savefig(os.path.join(output_folder, 'decode1_filters.png'))
 
 # filters transposed (should be approximately similar to encode1 filters? not sure if true)
 filters_transposed = filters.transpose()
-filters_transposed = np.reshape(filters,(-1, 28, 28))
+filters_transposed = np.reshape(filters_transposed, (-1, 28))
+
+filters_transposed = np.reshape(filters_transposed,(-1, 28, 28))
 vis_square(filters_transposed)
-plt.savefig('visualize/viz_results/pascal_ae_topology/decode1_filters_transposed.png')
+plt.savefig(os.path.join(output_folder, 'decode1_filters_transposed.png'))
 
 # deencode1 output
 feat = net.blobs['decode1'].data[0] #500
 feat = np.reshape(feat, (-1, 28, 28))  # B*900 --> Bx10x10
 vis_square(feat, padval=0.5)
-plt.savefig('visualize/viz_results/pascal_ae_topology/decode1_output.png')
+plt.savefig(os.path.join(output_folder, 'decode1_output.png'))
