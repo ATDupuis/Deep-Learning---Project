@@ -80,7 +80,7 @@ if(USE_OPENCV)
 endif()
 
 # ---[ BLAS
-if(NOT APPLE)
+#if(NOT APPLE)
   set(BLAS "Atlas" CACHE STRING "Selected BLAS library")
   set_property(CACHE BLAS PROPERTY STRINGS "Atlas;Open;MKL")
 
@@ -98,11 +98,17 @@ if(NOT APPLE)
     list(APPEND Caffe_LINKER_LIBS ${MKL_LIBRARIES})
     add_definitions(-DUSE_MKL)
   endif()
-elseif(APPLE)
-  find_package(vecLib REQUIRED)
-  include_directories(SYSTEM ${vecLib_INCLUDE_DIR})
-  list(APPEND Caffe_LINKER_LIBS ${vecLib_LINKER_LIBS})
-endif()
+#elseif(APPLE)
+#  find_package(vecLib REQUIRED)
+#  include_directories(SYSTEM ${vecLib_INCLUDE_DIR})
+#  list(APPEND Caffe_LINKER_LIBS ${vecLib_LINKER_LIBS})
+
+#  if(VECLIB_FOUND)
+#    if(NOT vecLib_INCLUDE_DIR MATCHES "^/System/Library/Frameworks/vecLib.framework.*")
+#      add_definitions(-DUSE_ACCELERATE)
+#    endif()
+#  endif()
+#endif()
 
 # ---[ Python
 if(BUILD_python)

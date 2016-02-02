@@ -105,6 +105,8 @@ find_package_handle_standard_args(MKL DEFAULT_MSG ${__looked_for})
 
 if(MKL_FOUND)
   message(STATUS "Found MKL (include: ${MKL_INCLUDE_DIR}, lib: ${MKL_LIBRARIES}")
+else()
+  message(STATUS "Could NOT find MKL")
 endif()
 
 caffe_clear_vars(__looked_for __mkl_libs __path_suffixes __lib_suffix __iomp5_libs)
